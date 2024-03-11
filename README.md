@@ -4,7 +4,18 @@
 
 ## Installation
 
-TODO
+### Go >= 1.17
+
+```shell
+go install github.com/cpendery/kaldo@latest
+```
+
+### Go < 1.17
+
+```shell
+go get github.com/cpendery/kaldo
+```
+
 
 ## Initialize Shell Plugin
 
@@ -33,7 +44,6 @@ All aliases are stored inside your `~/.kaldorc` file. Below is an example of how
 
 ```toml
 # .kaldorc
-
 ek = 'echo "kaldo"' # when outside of a table, the alias is loaded for all your shells
 
 [bash]
