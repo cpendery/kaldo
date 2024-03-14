@@ -23,19 +23,19 @@ After installation, you need to initialize the shell plugin for each shell you w
 
 ```shell
 # bash
-echo "$(kaldo init bash)" >> ~/.bashrc
+echo $(kaldo init bash) >> ~/.bashrc
 
 # zsh
-echo "$(kaldo init zsh)" >> ~/.zshrc
+echo $(kaldo init zsh) >> ~/.zshrc
 
 # fish
-echo "$(kaldo init fish)" >> ~/.config/fish/config.fish
+echo $(kaldo init fish) >> ~/.config/fish/config.fish
 
 # pwsh
-echo "$(kaldo init pwsh)" >> $profile
+echo $(kaldo init pwsh) >> $profile
 
 # powershell
-echo "$(kaldo init powershell)" >> $profile
+echo $(kaldo init powershell) >> $profile
 ```
 
 ## Configure Aliases

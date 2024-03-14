@@ -16,8 +16,8 @@ const (
 )
 
 const (
-	shInjection         = `which kaldo $> /dev/null && eval "$(kaldo -s %s)"`
-	powershellInjection = `if (Get-Command "kaldo.exe" -ErrorAction SilentlyContinue) { . "$(kaldo -s %s)" }`
+	shInjection         = `which kaldo &> /dev/null && eval $(kaldo -s %s)`
+	powershellInjection = `if (Get-Command "kaldo.exe" -ErrorAction SilentlyContinue) { $aliases = kaldo -s %s | Out-String ; . { Invoke-Expression $aliases } }`
 )
 
 var ValidShells = []Shell{Bash, Zsh, WindowsPowershell, Powershell, Fish}
