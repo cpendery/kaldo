@@ -40,7 +40,18 @@ echo $(kaldo init powershell) >> $profile
 
 ## Configure Aliases
 
-All aliases are stored inside your `~/.kaldorc` file. Below is an example of how to define shell specific and cross shell aliases.
+All aliases are stored inside your `~/.kaldorc` toml file. Below is an example of how to define shell specific and cross shell aliases. The following tables result in custom aliases while no table results in an alias for every shell.
+
+- `bash`: aliases for the bash shell
+- `zsh`: aliases for the zsh shell
+- `fish`: aliases for the fish shell
+- `powershell`: aliases for Windows Powershell
+- `pwsh`: aliases for Powershell Core
+
+There are also 2 custom group tables that help reduce duplication across similar shells.
+
+- `sh`: aliases for `bash`, `zsh`, and `fish`
+- `power`: aliases for `powershell` and `pwsh`
 
 ```toml
 # .kaldorc

@@ -15,6 +15,13 @@ const (
 	Fish              Shell = "fish"
 )
 
+type ShellGroup = string
+
+const (
+	PowerGroup ShellGroup = "power"
+	ShGroup    ShellGroup = "sh"
+)
+
 const (
 	shInjection         = `which kaldo &> /dev/null && eval $(kaldo -s %s)`
 	powershellInjection = `if (Get-Command "kaldo.exe" -ErrorAction SilentlyContinue) { $aliases = kaldo -s %s | Out-String ; . { Invoke-Expression $aliases } }`

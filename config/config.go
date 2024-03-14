@@ -68,26 +68,34 @@ func Load() (*map[string]interface{}, error) {
 		configPath := configPaths[idx]
 		for key, value := range configToml {
 			switch key {
-			case shell.Powershell, shell.WindowsPowershell, shell.Bash, shell.Zsh, shell.Fish:
-				switch aliasMap := value.(type) {
-				case map[string]interface{}:
-					for alias, value := range aliasMap {
-						switch cmd := value.(type) {
-						case string:
-							if _, ok := config[key]; !ok {
-								config[key] = map[string]string{}
+			case shell.Powershell, shell.WindowsPowershell, shell.Bash, shell.Zsh, shell.Fish, shell.PowerGroup, shell.ShGroup:
+				shells := []string{key}
+				if key == shell.ShGroup {
+					shells = []string{shell.Bash, shell.Fish, shell.Zsh}
+				} else if key == shell.PowerGroup {
+					shells = []string{shell.Powershell, shell.WindowsPowershell}
+				}
+				for _, shell := range shells {
+					switch aliasMap := value.(type) {
+					case map[string]interface{}:
+						for alias, value := range aliasMap {
+							switch cmd := value.(type) {
+							case string:
+								if _, ok := config[shell]; !ok {
+									config[shell] = map[string]string{}
+								}
+								if _, ok := config[shell].(map[string]string)[alias]; ok {
+									return nil, fmt.Errorf("duplicate entry for %s.%s", shell, alias)
+								} else {
+									config[shell].(map[string]string)[alias] = cmd
+								}
+							default:
+								return nil, fmt.Errorf("invalid value for %s, expected string for alias comand: error in %s", alias, configPath)
 							}
-							if _, ok := config[key].(map[string]string)[alias]; ok {
-								return nil, fmt.Errorf("duplicate entry for %s.%s", key, alias)
-							} else {
-								config[key].(map[string]string)[alias] = cmd
-							}
-						default:
-							return nil, fmt.Errorf("invalid value for %s, expected string for alias comand: error in %s", alias, configPath)
 						}
+					default:
+						return nil, fmt.Errorf("invalid value for shell %s, expected an alias-command key-pair: error in %s", shell, configPath)
 					}
-				default:
-					return nil, fmt.Errorf("invalid value for shell %s, expected an alias-command key-pair: error in %s", key, configPath)
 				}
 			default:
 				switch cmd := value.(type) {
