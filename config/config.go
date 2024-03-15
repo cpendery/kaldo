@@ -36,7 +36,7 @@ func getConfigPaths() ([]string, error) {
 			return nil, fmt.Errorf("unable to detect if running in WSL: %w", err)
 		}
 		if wsl {
-			configPaths = append(configPaths, filepath.Join("mnt", "c", "Users", filepath.Base(homeDir), configFilename))
+			configPaths = append(configPaths, filepath.Join(fmt.Sprintf("%cmnt", filepath.Separator), "c", "Users", filepath.Base(homeDir), configFilename))
 		}
 	}
 	return configPaths, nil

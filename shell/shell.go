@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	shInjection         = `which kaldo &> /dev/null && eval $(kaldo -s %s)`
+	shInjection         = `which kaldo &> /dev/null && eval "$(kaldo -s %s)"`
 	powershellInjection = `if (Get-Command "kaldo.exe" -ErrorAction SilentlyContinue) { $aliases = kaldo -s %s | Out-String ; . { Invoke-Expression $aliases } }`
 )
 
@@ -60,7 +60,7 @@ func extractAliases(config *map[string]interface{}, shell Shell) *map[string]str
 func generateShAliases(aliases *map[string]string) string {
 	builder := strings.Builder{}
 	for alias, cmd := range *aliases {
-		builder.WriteString(fmt.Sprintf("alias %s=\"%s\"\n", alias, cmd))
+		builder.WriteString(fmt.Sprintf("alias %s='%s'\n", alias, cmd))
 	}
 	return builder.String()
 }
@@ -68,7 +68,7 @@ func generateShAliases(aliases *map[string]string) string {
 func generatePowershellAliases(aliases *map[string]string) string {
 	builder := strings.Builder{}
 	for alias, cmd := range *aliases {
-		builder.WriteString(fmt.Sprintf("function Kaldo-%s() {\n%s\n}\nSet-Alias -Name %s -Value Kaldo-%s\n", alias, cmd, alias, alias))
+		builder.WriteString(fmt.Sprintf("function %s() {\n%s\n}\n", alias, cmd))
 	}
 	return builder.String()
 }
