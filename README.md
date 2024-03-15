@@ -4,22 +4,23 @@
 
 ## Installation
 
-### Go >= 1.17
+### Windows
 
 ```shell
-go install github.com/cpendery/kaldo@latest
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+iwr -useb https://raw.githubusercontent.com/cpendery/kaldo/main/install.ps1 | iex
 ```
 
-### Go < 1.17
+### macOS / Linux
 
-```shell
-go get github.com/cpendery/kaldo
+```
+curl -sSfL https://raw.githubusercontent.com/cpendery/kaldo/main/install.sh | sh -s -- -b /usr/local/bin
 ```
 
 
 ## Initialize Shell Plugin
 
-After installation, you need to initialize the shell plugin for each shell you want to share aliases with. After using your respective shell commands below, restart your shell to get shared aliases.
+If installed manually, you need to initialize the shell plugin for each shell you want to share aliases with. After using your respective shell commands below, restart your shell to get shared aliases.
 
 ```shell
 # bash
