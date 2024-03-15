@@ -18,7 +18,9 @@ curl -sSfL https://raw.githubusercontent.com/cpendery/kaldo/main/install.sh | sh
 ```
 
 
-## Initialize Shell Plugin
+### Initialize Shell Plugin
+
+_ignore this section if you used the install script_
 
 If installed manually, you need to initialize the shell plugin for each shell you want to share aliases with. After using your respective shell commands below, restart your shell to get shared aliases.
 
