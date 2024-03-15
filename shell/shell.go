@@ -68,7 +68,7 @@ func generateShAliases(aliases *map[string]string) string {
 func generatePowershellAliases(aliases *map[string]string) string {
 	builder := strings.Builder{}
 	for alias, cmd := range *aliases {
-		builder.WriteString(fmt.Sprintf("Remove-Alias '%s' -Force -ErrorAction SilentlyContinue\n", alias))
+		builder.WriteString(fmt.Sprintf("Remove-Item Alias:%s -Force -ErrorAction SilentlyContinue\n", alias))
 		builder.WriteString(fmt.Sprintf("function kaldo-%s() {\n%s $args\n}\n", alias, cmd))
 		builder.WriteString(fmt.Sprintf("Set-Alias -Name '%s' -Value 'kaldo-%s'\n\n", alias, alias))
 	}
