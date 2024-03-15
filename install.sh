@@ -1,6 +1,4 @@
 #!/bin/sh
-set -u
-
 cat << EOF
 ===============================================================================
  _           _     _       
@@ -16,6 +14,7 @@ https://github.com/cpendery/kaldo
 
 Please file an issue if you encounter any problems!
 ===============================================================================
+
 EOF
 
 
@@ -49,33 +48,11 @@ log_priority() (
   [ "$1" -le "$_logp" ]
 )
 
-init_colors() {
-  RED=''
-  BLUE=''
-  PURPLE=''
-  BOLD=''
-  RESET=''
-  # check if stdout is a terminal
-  if test -t 1 && is_command tput; then
-      # see if it supports colors
-      ncolors=$(tput colors)
-      if test -n "$ncolors" && test $ncolors -ge 8; then
-        RED='\033[0;31m'
-        BLUE='\033[0;34m'
-        PURPLE='\033[0;35m'
-        BOLD='\033[1m'
-        RESET='\033[0m'
-      fi
-  fi
-}
-
-init_colors
-
 log_tag() (
   case $1 in
     0) echo "[error]" ;;
     1) echo "[warn]" ;;
-    2) echo "[info]" ;;
+    2) echo "" ;;
     3) echo "[debug]" ;;
     4) echo "[trace]" ;;
     *) echo "[$1]" ;;
@@ -87,35 +64,35 @@ log_trace_priority=4
 log_trace() (
   priority=$log_trace_priority
   log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
+  echo_stderr "$(log_tag $priority)" "${@}"
 )
 
 log_debug_priority=3
 log_debug() (
   priority=$log_debug_priority
   log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
+  echo_stderr "$(log_tag $priority)" "${@}"
 )
 
 log_info_priority=2
 log_info() (
   priority=$log_info_priority
   log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
+  echo_stderr "$(log_tag $priority)" "${@}"
 )
 
 log_warn_priority=1
 log_warn() (
   priority=$log_warn_priority
   log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
+  echo_stderr "$(log_tag $priority)" "${@}"
 )
 
 log_err_priority=0
 log_err() (
   priority=$log_err_priority
   log_priority "$priority" || return 0
-  echo_stderr "$(log_tag $priority)" "${@}" "${RESET}"
+  echo_stderr "$(log_tag $priority)" "${@}"
 )
 
 uname_os_check() (
@@ -157,32 +134,6 @@ uname_arch_check() (
   esac
   log_err "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
   return 1
-)
-
-unpack() (
-  archive=$1
-
-  log_trace "unpack(archive=${archive})"
-
-  case "${archive}" in
-    *.tar.gz | *.tgz) tar --no-same-owner -xzf "${archive}" ;;
-    *.tar) tar --no-same-owner -xf "${archive}" ;;
-    *.zip) unzip -q "${archive}" ;;
-    *.dmg) extract_from_dmg "${archive}" ;;
-    *)
-      log_err "unpack unknown archive format for ${archive}"
-      return 1
-      ;;
-  esac
-)
-
-extract_from_dmg() (
-  dmg_file=$1
-
-  mount_point="/Volumes/tmp-dmg"
-  hdiutil attach -quiet -nobrowse -mountpoint "${mount_point}" "${dmg_file}"
-  cp -fR "${mount_point}/." ./
-  hdiutil detach -quiet -force "${mount_point}"
 )
 
 http_download_curl() (
@@ -240,61 +191,9 @@ http_copy() (
   echo "$body"
 )
 
-hash_sha256() (
-  TARGET=${1:-/dev/stdin}
-  if is_command gsha256sum; then
-    hash=$(gsha256sum "$TARGET") || return 1
-    echo "$hash" | cut -d ' ' -f 1
-  elif is_command sha256sum; then
-    hash=$(sha256sum "$TARGET") || return 1
-    echo "$hash" | cut -d ' ' -f 1
-  elif is_command shasum; then
-    hash=$(shasum -a 256 "$TARGET" 2>/dev/null) || return 1
-    echo "$hash" | cut -d ' ' -f 1
-  elif is_command openssl; then
-    hash=$(openssl -dst openssl dgst -sha256 "$TARGET") || return 1
-    echo "$hash" | cut -d ' ' -f a
-  else
-    log_err "hash_sha256 unable to find command to compute sha-256 hash"
-    return 1
-  fi
-)
-
-hash_sha256_verify() (
-  TARGET=$1
-  checksums=$2
-  if [ -z "$checksums" ]; then
-    log_err "hash_sha256_verify checksum file not specified in arg2"
-    return 1
-  fi
-  BASENAME=${TARGET##*/}
-  want=$(grep "${BASENAME}" "${checksums}" 2>/dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
-  if [ -z "$want" ]; then
-    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
-    return 1
-  fi
-  got=$(hash_sha256 "$TARGET")
-  if [ "$want" != "$got" ]; then
-    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
-    return 1
-  fi
-)
-
 # ------------------------------------------------------------------------
-# End of functions from https://github.com/client9/shlib
+# end https://github.com/client9/shlib
 # ------------------------------------------------------------------------
-
-# asset_file_exists [path]
-#
-# returns 1 if the given file does not exist
-#
-asset_file_exists() (
-  path="$1"
-  if [ ! -f "${path}" ]; then
-      return 1
-  fi
-)
-
 
 # github_release_json [owner] [repo] [version]
 #
@@ -347,51 +246,6 @@ github_release_tag() (
   tag=$(extract_json_value "${json}" "tag_name")
   test -z "$tag" && return 1
   echo "$tag"
-)
-
-# download_github_release_checksums [release-url-prefix] [name] [version] [output-dir]
-#
-# outputs path to the downloaded checksums file
-#
-download_github_release_checksums() (
-  download_url="$1"
-  name="$2"
-  version="$3"
-  output_dir="$4"
-
-  log_trace "download_github_release_checksums(url=${download_url}, name=${name}, version=${version}, output_dir=${output_dir})"
-
-  checksum_filename=${name}_${version}_checksums.txt
-  checksum_url=${download_url}/${checksum_filename}
-  output_path="${output_dir}/${checksum_filename}"
-
-  http_download "${output_path}" "${checksum_url}" ""
-  asset_file_exists "${output_path}"
-
-  log_trace "download_github_release_checksums() returned '${output_path}'"
-
-  echo "${output_path}"
-)
-
-# search_for_asset [checksums-file-path] [name] [os] [arch] [format]
-#
-# outputs name of the asset to download
-#
-search_for_asset() (
-  checksum_path="$1"
-  name="$2"
-  os="$3"
-  arch="$4"
-  format="$5"
-
-  log_trace "search_for_asset(checksum-path=${checksum_path}, name=${name}, os=${os}, arch=${arch}, format=${format})"
-
-  asset_glob="${name}_.*_${os}_${arch}.${format}"
-  output_path=$(grep -o "${asset_glob}" "${checksum_path}" || true)
-
-  log_trace "search_for_asset() returned '${output_path}'"
-
-  echo "${output_path}"
 )
 
 # uname_os
@@ -459,152 +313,63 @@ get_release_tag() (
   echo "${real_tag}"
 )
 
-# tag_to_version [tag]
-#
-# outputs version string
-#
-tag_to_version() (
+download_release() (
   tag="$1"
-  value="${tag#v}"
-
-  log_trace "tag_to_version(tag=${tag}) returned '${value}'"
-
-  echo "$value"
+  os="$2"
+  arch="$3"
+  
+  path="$HOME/.$PROJECT_NAME/bin/"
+  binary_path="$path/$PROJECT_NAME"
+  mkdir -p $path
+  http_download "$binary_path" "$GITHUB_DOWNLOAD_PREFIX/$tag/$PROJECT_NAME-$tag-$os-$arch" ""
+  chmod u+x "$binary_path"
 )
 
-# get_binary_name [os] [arch] [default-name]
-#
-# outputs a the binary string name
-#
-get_binary_name() (
-  os="$1"
-  arch="$2"
-  binary="$3"
-  original_binary="${binary}"
-
-  case "${os}" in
-    windows) binary="${binary}.exe" ;;
+update_path() (
+  case ":${PATH}:" in
+    *:"$HOME/.$PROJECT_NAME/bin":*)
+        return 0
+        ;;
+    *)
+        ;;
   esac
 
-  log_trace "get_binary_name(os=${os}, arch=${arch}, binary=${original_binary}) returned '${binary}'"
-
-  echo "${binary}"
+  path_cmd="PATH=\"\$HOME/.$PROJECT_NAME/bin:\${PATH}\"" 
+  echo "\n\n$path_cmd" >> "$HOME/.profile"
+  echo "\n\n$path_cmd" >> "$HOME/.zprofile"
 )
 
-
-# get_format_name [os] [arch] [default-format]
-#
-# outputs an adjusted file format
-#
-get_format_name() (
-  os="$1"
-  arch="$2"
-  format="$3"
-  original_format="${format}"
-
-  case ${os} in
-    windows) format=zip ;;
-  esac
-
-  log_trace "get_format_name(os=${os}, arch=${arch}, format=${original_format}) returned '${format}'"
-
-  echo "${format}"
-)
-
-# download_and_install_asset [release-url-prefix] [download-path] [install-path] [name] [os] [arch] [version] [format] [binary]
-#
-# attempts to download the archive and install it to the given path.
-#
-download_and_install_asset() (
-  download_url="$1"
-  download_path="$2"
-  install_path=$3
-  name="$4"
-  os="$5"
-  arch="$6"
-  version="$7"
-  format="$8"
-  binary="$9"
-
-  asset_filepath=$(download_asset "${download_url}" "${download_path}" "${name}" "${os}" "${arch}" "${version}" "${format}")
-
-  # don't continue if we couldn't download an asset
-  if [ -z "${asset_filepath}" ]; then
-      log_err "could not find release asset for os='${os}' arch='${arch}' format='${format}' "
-      return 1
+install_shellplugin() (
+  if ! grep -q "$PROJECT_NAME -s zsh" "${ZDOTDIR:-$HOME}/.zshrc"; then
+    $HOME/.$PROJECT_NAME/bin/$PROJECT_NAME init zsh >> "${ZDOTDIR:-$HOME}/.zshrc"
+    log_info "installed zsh plugin!"
   fi
 
-  install_asset "${asset_filepath}" "${install_path}" "${binary}"
-)
-
-# download_asset [release-url-prefix] [download-path] [name] [os] [arch] [version] [format] [binary]
-#
-# outputs the path to the downloaded asset asset_filepath
-#
-download_asset() (
-  download_url="$1"
-  destination="$2"
-  name="$3"
-  os="$4"
-  arch="$5"
-  version="$6"
-  format="$7"
-
-  log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
-
-  checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
-
-  log_trace "checksums content:\n$(cat ${checksums_filepath})"
-
-  asset_filename=$(search_for_asset "${checksums_filepath}" "${name}" "${os}" "${arch}" "${format}")
-
-  # don't continue if we couldn't find a matching asset from the checksums file
-  if [ -z "${asset_filename}" ]; then
-      return 1
+  if ! grep -q "$PROJECT_NAME -s bash" "$HOME/.bashrc"; then
+    $HOME/.$PROJECT_NAME/bin/$PROJECT_NAME init bash >> "$HOME/.bashrc"
+    log_info "installed bash plugin!"
   fi
 
-  asset_url="${download_url}/${asset_filename}"
-  asset_filepath="${destination}/${asset_filename}"
-  http_download "${asset_filepath}" "${asset_url}" ""
-
-  hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
-
-  log_trace "download_asset_by_checksums_file() returned '${asset_filepath}'"
-
-  echo "${asset_filepath}"
-)
-
-# install_asset [asset-path] [destination-path] [binary]
-#
-install_asset() (
-  asset_filepath="$1"
-  destination="$2"
-  binary="$3"
-
-  log_trace "install_asset(asset=${asset_filepath}, destination=${destination}, binary=${binary})"
-
-  # don't continue if we don't have anything to install
-  if [ -z "${asset_filepath}" ]; then
-      return
+  mkdir -p "$HOME/.config/fish"
+  if [ -f "$HOME/.config/fish/config.fish" ]; then
+    if ! grep -q "$PROJECT_NAME -s fish" "$HOME/.config/fish/config.fish"; then
+      $HOME/.$PROJECT_NAME/bin/$PROJECT_NAME init fish >> "$HOME/.config/fish/config.fish"
+      log_info "installed fish plugin!"
+    fi
   fi
-
-  archive_dir=$(dirname "${asset_filepath}")
-
-  # unarchive the downloaded archive to the temp dir
-  (cd "${archive_dir}" && unpack "${asset_filepath}")
-
-  # create the destination dir
-  test ! -d "${destination}" && install -d "${destination}"
-
-  # install the binary to the destination dir
-  install "${archive_dir}/${binary}" "${destination}/"
+  
 )
-
-# ------------------------------------------------------------------------
-# end https://github.com/client9/shlib
-# ------------------------------------------------------------------------
 
 main() (
+  os=$(uname_os)
+
+  # check if installing on windows
+  if [[ $os == "windows" ]]; then 
+    log_err "installation on windows is only supported via the powershell install script"
+    return 1
+  fi
+
+  # pull latest github release
   log_info "checking github for the current release tag"
   tag=""
 
@@ -615,35 +380,36 @@ main() (
       return 1
   fi
 
-  # run the application
-  version=$(tag_to_version "${tag}")
-  os=$(uname_os)
-  arch=$(uname_arch)
-  format=$(get_format_name "${os}" "${arch}" "tar.gz")
-  binary=$(get_binary_name "${os}" "${arch}" "${PROJECT_NAME}")
-  download_url="${GITHUB_DOWNLOAD_PREFIX}/${tag}"
-  install_dir=$(pwd)
+  update_path
 
-  # check if installing on windows
-  if [[ $os == "windows" ]]; then 
-    log_err "installation on windows is only supported via the powershell install script"
-    return 1
-  fi
+  # run the install
+  arch=$(uname_arch)
 
   # download to temp directory
-  log_info "using release tag='${tag}' version='${version}' os='${os}' arch='${arch}'"
-  download_dir=$(mktemp -d)
-  trap 'rm -rf -- "$download_dir"' EXIT
+  log_info "using release tag='${tag}' os='${os}' arch='${arch}'"
 
-  # unpack and move to current directory
-  download_and_install_asset "${download_url}" "${download_dir}" "${install_dir}" "${PROJECT_NAME}" "${os}" "${arch}" "${version}" "${format}" "${binary}"
+  # install and move to current directory
+  download_release "${tag}" "${os}" "${arch}"
 
   if [ "$?" != "0" ]; then
-      log_err "failed to unpack ${PROJECT_NAME}"
+      log_err "failed to install ${PROJECT_NAME}"
       return 1
   fi
+
+  install_shellplugin
 )
 
 # entrypoint
 main "$@"
-exit $?
+
+cat << EOF
+
+===============================================================================
+
+thanks for installing kaldo!
+if you have any issues, please open an issue on GitHub!
+if you love kaldo, please give us a star on GitHub! it really helps ⭐️ https://github.com/cpendery/kaldo
+
+to have kaldo take effect, restart your shell!
+
+EOF
