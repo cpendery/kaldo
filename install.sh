@@ -364,7 +364,7 @@ main() (
   os=$(uname_os)
 
   # check if installing on windows
-  if [[ $os == "windows" ]]; then 
+  if [ $os = "windows" ]; then 
     log_err "installation on windows is only supported via the powershell install script"
     return 1
   fi

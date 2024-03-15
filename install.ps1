@@ -195,11 +195,15 @@ function Install-ShellPlugin {
     $shell = ""
     if ($PSVersionTable.PSEdition -eq "Core") {
         $shell = "pwsh"
-    } else {
+    }
+    else {
         $shell = "powershell"
     }
-    kaldo init $shell | Out-File $profile -Append -Encoding "UTF8"
-    Write-InstallInfo "installed $shell plugin!"
+
+    if (-not (Select-String -Path $profile -Pattern "kaldo -s $shell")) {
+        kaldo init $shell | Out-File $profile -Append -Encoding "UTF8"
+        Write-InstallInfo "installed $shell plugin!"
+    }
 }
 
 function Download-Release {
