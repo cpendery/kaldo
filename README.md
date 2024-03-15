@@ -14,7 +14,7 @@ iwr -useb https://raw.githubusercontent.com/cpendery/kaldo/main/install.ps1 | ie
 ### macOS / Linux
 
 ```
-curl -sSfL https://raw.githubusercontent.com/cpendery/kaldo/main/install.sh | sh -s -- -b /usr/local/bin
+curl -sSfL https://raw.githubusercontent.com/cpendery/kaldo/main/install.sh | sh -s
 ```
 
 
