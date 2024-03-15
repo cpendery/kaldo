@@ -17,14 +17,21 @@ var (
 		RunE:         rootExec,
 		SilenceUsage: true,
 	}
-	rootShell string
+	rootShell   string
+	Version     string = ""
+	versionFlag bool
 )
 
 func init() {
 	rootCmd.Flags().StringVarP(&rootShell, "shell", "s", "", fmt.Sprintf("the shell to create completions for, valid shells: %q", shell.ValidShells))
+	rootCmd.Flags().BoolVar(&versionFlag, "version", false, "print release version")
 }
 
 func rootExec(cmd *cobra.Command, args []string) error {
+	if versionFlag {
+		fmt.Println(Version)
+		return nil
+	}
 	if rootShell == "" || !slices.Contains(shell.ValidShells, rootShell) {
 		return fmt.Errorf("provide a valid shell to generate completions for via the --shell flag, received %s", rootShell)
 	}
@@ -40,7 +47,8 @@ func rootExec(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func Execute() {
+func Execute(version string) {
+	Version = version
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
